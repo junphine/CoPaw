@@ -21,6 +21,7 @@ import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, AsyncIterator, Literal
+from urllib.parse import quote
 
 from fastapi import (
     APIRouter,
@@ -456,12 +457,13 @@ async def download_workspace_file(
                 yield chunk
 
     filename = target.name.replace('"', "")
+    encoded = quote(filename, encoding='utf-8')
     return StreamingResponse(
         _stream_file(),
         media_type="application/octet-stream",
         headers={
             "Accept-Ranges": "bytes",
-            "Content-Disposition": (f'attachment; filename="{filename}"'),
+            "Content-Disposition": (f'attachment; filename="{encoded}"'),
             "Content-Length": str(info.st_size),
             "ETag": file_etag(info),
         },

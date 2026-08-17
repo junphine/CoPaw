@@ -101,7 +101,7 @@ import { projectDirectoryApi } from "../../api/modules/projectDirectory";
 import {
   getPendingProjectDirectory,
   migratePendingProjectDirectory,
-  setPendingProjectDirectory,
+  //setPendingProjectDirectory,
   withPendingProjectDirectory,
 } from "../../features/project-directory/pendingProjectDirectory";
 import {
@@ -440,7 +440,7 @@ async function startBackgroundQueue(
           throw new Error(`HTTP ${res.status}`);
         }
         if (pendingRequest.projectDir) {
-          //-setPendingProjectDirectory(queueAgentId, queueKey, null);
+          //setPendingProjectDirectory(queueAgentId, queueKey, null);
         }
         fetchStarted = true;
 
@@ -2702,7 +2702,7 @@ export default function ChatPage() {
       const localIdToResolve = sessionApi.lastActiveChatId ?? chatIdRef.current;
       if (response.ok && localIdToResolve) {
         if (appliedProjectDir && projectSessionId) {
-          //-setPendingProjectDirectory(selectedAgent, projectSessionId, null);
+          //setPendingProjectDirectory(selectedAgent, projectSessionId, null);
         }
         sessionApi.triggerResolve(localIdToResolve);
       }
@@ -2748,7 +2748,7 @@ export default function ChatPage() {
           return;
         }
 
-        const res = await chatApi.uploadFile(file,appliedProjectDir);
+        const res = await chatApi.uploadFile(file,appliedProjectDir||undefined);
         onProgress?.({ percent: 100 });
         const previewUrl = chatApi.filePreviewUrl(res.url);
         onSuccess({ url: previewUrl });

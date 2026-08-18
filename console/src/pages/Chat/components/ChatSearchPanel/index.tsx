@@ -222,7 +222,7 @@ const ChatSearchPanel: React.FC<ChatSearchPanelProps> = ({ open, onClose }) => {
           setSearchProgress("");
         }
       }
-    }, 300);
+    }, 3000);
 
     return () => {
       if (searchTimeoutRef.current) {

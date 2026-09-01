@@ -3130,7 +3130,7 @@ export default function ChatPage() {
               onLoadingChange={setChatLoading}
             />
             <ChatHeaderTitle />
-            <span style={{ flex: 1 }} />
+            <span className={styles.headerSpacer} />
             {usesQwenPawBackend ? (
               <ModelSelector />
             ) : backendCapabilities?.model_selection ? (
@@ -3198,7 +3198,12 @@ export default function ChatPage() {
                 onTranscription={handleWhisperTranscription}
               />
             ) : null}
-            {usesQwenPawBackend && <LoopModeSelector />}
+            {usesQwenPawBackend && (
+              <LoopModeSelector
+                className={isMobile ? styles.mobileComposerControl : undefined}
+                compact={isMobile}
+              />
+            )}
             {pluginSenderPrefix}
           </>
         ),
@@ -3209,22 +3214,34 @@ export default function ChatPage() {
             }`}
           >
             {(usesQwenPawBackend || backendCapabilities?.context_usage) && (
-              <ContextUsageIndicator
-                onCompact={handleCompactCommand}
-                onNew={handleNewCommand}
-              />
+              <span className={styles.senderContextAffix}>
+                <ContextUsageIndicator
+                  onCompact={handleCompactCommand}
+                  onNew={handleNewCommand}
+                />
+              </span>
             )}
             {usesQwenPawBackend && (
               <SessionProjectDirectory
                 scope={sessionScope}
-                compact={compactSender}
+                compact={isMobile || compactSender}
+                className={
+                  isMobile || compactSender
+                    ? styles.mobileComposerControl
+                    : undefined
+                }
               />
             )}
             {usesQwenPawBackend ? (
               <ApprovalLevelToggle
                 sessionId={queueSessionId}
                 runningConfigApprovalLevel={runningConfigApprovalLevel}
-                compact={compactSender}
+                compact={isMobile || compactSender}
+                className={
+                  isMobile || compactSender
+                    ? styles.mobileComposerControl
+                    : undefined
+                }
                 onChange={(sessionOverride) => {
                   sessionApprovalLevelRef.current = sessionOverride;
                 }}
@@ -3234,6 +3251,8 @@ export default function ChatPage() {
                 backend={selectedAgentBackend}
                 sessionId={queueSessionId}
                 presets={approvalPresets}
+                className={isMobile ? styles.mobileComposerControl : undefined}
+                compact={isMobile}
                 onChange={(settings) => {
                   backendControlsRef.current = settings;
                 }}
@@ -3548,6 +3567,7 @@ export default function ChatPage() {
     toggleHistoryPanel,
     handleCompactCommand,
     handleNewCommand,
+    isMobile,
     compactSender,
     sessionScope,
     filesWorkspaceOpen,

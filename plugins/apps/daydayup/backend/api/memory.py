@@ -167,18 +167,6 @@ async def get_memories(
     }
 
 
-@router.get("/{memory_id}")
-async def get_memory(memory_id: str):
-    """获取单个记忆"""
-    logger.debug(f"[Memory] Getting memory: {memory_id}")
-    
-    memory = next((m for m in SAMPLE_MEMORIES if m["id"] == memory_id), None)
-    if not memory:
-        raise HTTPException(status_code=404, detail=f"Memory not found: {memory_id}")
-    
-    return memory
-
-
 @router.post("/search")
 async def search_memories(query: MemoryQuery, user_id: str = "default"):
     """搜索记忆"""
@@ -323,3 +311,15 @@ async def delete_memory(memory_id: str):
         "success": True,
         "message": "Memory deleted successfully"
     }
+
+
+@router.get("/{memory_id}")
+async def get_memory(memory_id: str):
+    """获取单个记忆"""
+    logger.debug(f"[Memory] Getting memory: {memory_id}")
+    
+    memory = next((m for m in SAMPLE_MEMORIES if m["id"] == memory_id), None)
+    if not memory:
+        raise HTTPException(status_code=404, detail=f"Memory not found: {memory_id}")
+    
+    return memory

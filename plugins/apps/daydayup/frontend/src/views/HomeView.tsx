@@ -2,166 +2,132 @@
  * Home View - 主页学习空间
  */
 
-import React, { useState, useEffect } from 'react';
+const { React, antd } = (window as any).QwenPaw.host;
+const { useState, useEffect, useCallback } = React;
+const { Layout, Menu, Card, Statistic, Row, Col, Button, Input, Spin, Tag, message } = antd;
+const { Sider, Content, Header } = Layout;
 
-interface HomeViewProps {
-  api?: any;
+
+
+// 通用 API 请求函数
+async function apiRequest(endpoint: string, options: any = {}) {
+  const url = `${endpoint}`;
+  try {
+    const response = await fetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+      ...options
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    console.error(`[Daydayup] API Error: ${url}`, error);
+    throw error;
+  }
 }
 
-export const HomeView: React.FC<HomeViewProps> = ({ api }) => {
-  const [dashboard, setDashboard] = useState<any>(null);
-  const [quickActions, setQuickActions] = useState<any[]>([]);
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+// ==================== 首页组件 ====================
+export const HomeView = ({ api }) => {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // 加载仪表板数据
-    fetch('/plugins/daydayup/home/dashboard?user_id=default')
-      .then(res => res.json())
-      .then(data => {
-        setDashboard(data);
+    apiRequest(api+'/home/dashboard?user_id=default')
+      .then((data: any) => {
+        setData(data);
         setLoading(false);
       })
-      .catch(err => {
-        console.error('Failed to load dashboard:', err);
-        setLoading(false);
-      });
-
-    // 加载快速操作
-    fetch('/plugins/daydayup/home/quick-actions')
-      .then(res => res.json())
-      .then(data => {
-        setQuickActions(data.actions || []);
-      })
-      .catch(err => {
-        console.error('Failed to load quick actions:', err);
-      });
-
-    // 加载统计
-    fetch('/plugins/daydayup/home/stats')
-      .then(res => res.json())
-      .then(data => {
-        setStats(data);
-      })
-      .catch(err => {
-        console.error('Failed to load stats:', err);
-      });
+      .catch(() => setLoading(false));
   }, []);
-
-  const handleQuickAction = (actionId: string) => {
-    console.log('Quick action:', actionId);
-    // 处理快速操作
-  };
 
   if (loading) {
     return (
-      <div className="view-loading">
-        <div className="loading-spinner">🏠</div>
-        <p>加载中...</p>
-      </div>
+      <Spin size="large" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }} />
     );
   }
 
   return (
-    <div className="home-view">
-      {/* 欢迎区域 */}
-      <section className="welcome-section">
-        <h1>欢迎回到趣学习！</h1>
-        <p className="subtitle">继续你的学习之旅</p>
-        {stats && (
-          <div className="streak-badge">
-            <span className="streak-icon">🔥</span>
-            <span className="streak-count">连续学习 {stats.streak_days} 天</span>
-          </div>
-        )}
-      </section>
+    <div style={{ padding: '24px' }}>
+      <h1 style={{ marginBottom: '8px' }}>欢迎回到趣学习！</h1>
+      <p style={{ color: '#666', marginBottom: '24px' }}>
+        基于 Deep Tutor 架构的 AI 学习伴侣
+      </p>
 
-      {/* 快速操作 */}
-      <section className="quick-actions-section">
-        <h2>快速操作</h2>
-        <div className="quick-actions-grid">
-          {quickActions.map(action => (
-            <button
-              key={action.id}
-              className="quick-action-card"
-              onClick={() => handleQuickAction(action.id)}
-            >
-              <span className="action-icon">{action.icon}</span>
-              <span className="action-name">{action.name}</span>
-              <span className="action-desc">{action.description}</span>
-            </button>
-          ))}
-        </div>
-      </section>
+      {/* 统计卡片 */}
+      <Row gutter={16} style={{ marginBottom: '24px' }}>
+        <Col span={6}>
+          <Card>
+            <Statistic title="最近课程" value={data?.recent_courses?.length || 0} prefix="📖" />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic title="记忆条目" value={data?.recent_memories?.length || 0} prefix="🧠" />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic title="学习伙伴" value={data?.active_partners?.length || 0} prefix="👥" />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic title="知识条目" value={data?.total_memories || 0} prefix="📚" />
+          </Card>
+        </Col>
+      </Row>
 
-      {/* 最近课程 */}
-      <section className="recent-courses-section">
-        <h2>最近学习</h2>
-        <div className="courses-list">
-          {dashboard?.recent_courses?.map((course: any) => (
-            <div key={course.id} className="course-card">
-              <div className="course-info">
-                <h3>{course.title}</h3>
-                <div className="progress-bar">
-                  <div 
-                    className="progress-fill" 
-                    style={{ width: `${course.progress}%` }}
-                  />
-                </div>
-                <span className="progress-text">{course.progress}% 完成</span>
-              </div>
-              <button className="continue-btn">继续</button>
+      {/* Deep Tutor Capabilities 介绍 */}
+      <Card title="Deep Tutor Capabilities" style={{ marginBottom: '24px' }}>
+        <Row gutter={16}>
+          <Col span={8}>
+            <div style={{ textAlign: 'center', padding: '16px' }}>
+              <div style={{ fontSize: '32px' }}>🎯</div>
+              <div style={{ fontWeight: 'bold', marginTop: '8px' }}>深度解题</div>
+              <div style={{ color: '#666', fontSize: '12px' }}>Deep Solve</div>
             </div>
-          ))}
-        </div>
-      </section>
+          </Col>
+          <Col span={8}>
+            <div style={{ textAlign: 'center', padding: '16px' }}>
+              <div style={{ fontSize: '32px' }}>❓</div>
+              <div style={{ fontWeight: 'bold', marginTop: '8px' }}>深度提问</div>
+              <div style={{ color: '#666', fontSize: '12px' }}>Deep Question</div>
+            </div>
+          </Col>
+          <Col span={8}>
+            <div style={{ textAlign: 'center', padding: '16px' }}>
+              <div style={{ fontSize: '32px' }}>🔬</div>
+              <div style={{ fontWeight: 'bold', marginTop: '8px' }}>深度研究</div>
+              <div style={{ color: '#666', fontSize: '12px' }}>Deep Research</div>
+            </div>
+          </Col>
+        </Row>
+      </Card>
 
-      {/* 学习统计 */}
-      {stats && (
-        <section className="stats-section">
-          <h2>学习统计</h2>
-          <div className="stats-grid">
-            <div className="stat-card">
-              <span className="stat-icon">📚</span>
-              <span className="stat-value">{stats.total_courses}</span>
-              <span className="stat-label">总课程</span>
-            </div>
-            <div className="stat-card">
-              <span className="stat-icon">✅</span>
-              <span className="stat-value">{stats.completed_courses}</span>
-              <span className="stat-label">已完成</span>
-            </div>
-            <div className="stat-card">
-              <span className="stat-icon">🧠</span>
-              <span className="stat-value">{stats.total_memories}</span>
-              <span className="stat-label">记忆条目</span>
-            </div>
-            <div className="stat-card">
-              <span className="stat-icon">⏱️</span>
-              <span className="stat-value">{stats.total_study_time}</span>
-              <span className="stat-label">学习时长</span>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* 最近记忆 */}
-      <section className="recent-memories-section">
-        <h2>最近记忆</h2>
-        <div className="memories-list">
-          {dashboard?.recent_memories?.map((memory: any) => (
-            <div key={memory.id} className="memory-card">
-              <span className={`memory-layer layer-${memory.layer}`}>
-                {memory.layer.toUpperCase()}
-              </span>
-              <p className="memory-content">{memory.content}</p>
-              <span className="memory-time">
-                {new Date(memory.timestamp).toLocaleDateString()}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* 快速开始 */}
+      <Card title="快速开始">
+        <Row gutter={16}>
+          <Col span={6}>
+            <Button type="primary" block size="large" onClick={() => window.location.hash = '#/daydayup/partners'}>
+              👥 和学习伙伴聊天
+            </Button>
+          </Col>
+          <Col span={6}>
+            <Button block size="large" onClick={() => window.location.hash = '#/daydayup/agents'}>
+              🤖 创建智能体
+            </Button>
+          </Col>
+          <Col span={6}>
+            <Button block size="large" onClick={() => window.location.hash = '#/daydayup/memory'}>
+              🧠 查看记忆
+            </Button>
+          </Col>
+          <Col span={6}>
+            <Button block size="large" onClick={() => window.location.hash = '#/daydayup/learning'}>
+              🎓 继续学习
+            </Button>
+          </Col>
+        </Row>
+      </Card>
     </div>
   );
-};
+}

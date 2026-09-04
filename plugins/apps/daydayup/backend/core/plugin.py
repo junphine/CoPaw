@@ -22,6 +22,7 @@ from ..services.partner_service import PartnerService
 from ..services.agent_service import AgentService
 from ..services.skill_service import SkillService
 from ..services.capability_service import CapabilityService
+from ..services.book_service import BookService
 
 # 导入 API
 from ..api.router import create_api_router
@@ -84,6 +85,7 @@ class DaydayupPlugin:
             "agent": AgentService(self.data_dir, self.config),
             "skill": SkillService(self.data_dir, self.config),
             "capability": CapabilityService(self.data_dir, self.config),
+            "book": BookService(self.data_dir, self.config),
         }
         
         logger.info(f"[{self.id}] Services initialized: {list(self.services.keys())}")
@@ -105,7 +107,7 @@ class DaydayupPlugin:
         try:
             # 初始化服务
             self._init_services()
-            
+
             # 创建应用
             self.app = Application(
                 plugin=self,
@@ -113,6 +115,10 @@ class DaydayupPlugin:
                 events=self.events,
                 services=self.services
             )
+
+            # 初始化API服务
+            from ..api.book import init_book_service
+            init_book_service(self.services["book"], self.config, self.events)
             
             # 创建 API 路由
             router = create_api_router(self)

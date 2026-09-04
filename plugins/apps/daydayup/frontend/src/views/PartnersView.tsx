@@ -1,75 +1,56 @@
 /**
- * Partners View - AI 学习伙伴
+ * Partners View - 学习伙伴
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+const { React, antd } = (window as any).QwenPaw.host;
+const { useState, useEffect } = React;
+const { Card, Row, Col, Button, Input, Spin, message } = antd;
 
-interface PartnersViewProps {
-  api?: any;
+
+// 通用 API 请求函数
+async function apiRequest(endpoint: string, options: any = {}) {
+  const url = `${endpoint}`;
+  try {
+    const response = await fetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+      ...options
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    console.error(`[Daydayup] API Error: ${url}`, error);
+    throw error;
+  }
 }
 
-export const PartnersView: React.FC<PartnersViewProps> = ({ api }) => {
+// ==================== 学习伙伴页面 ====================
+export const PartnersView = ({ api }) => {
   const [partners, setPartners] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [selectedPartner, setSelectedPartner] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
-  const [inputMessage, setInputMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [inputMessage, setInputMessage] = useState<string>('');
 
   useEffect(() => {
-    fetch('/plugins/daydayup/partners/list')
-      .then(res => res.json())
-      .then(data => {
+    // 加载伙伴列表
+    apiRequest(api+'/partners/list')
+      .then((data: any) => {
         setPartners(data.partners || []);
-        if (data.partners?.length > 0) {
-          setSelectedPartner(data.partners[0]);
-        }
         setLoading(false);
       })
-      .catch(err => {
-        console.error('Failed to load partners:', err);
-        setLoading(false);
-      });
+      .catch(() => setLoading(false));
   }, []);
-
-  useEffect(() => {
-    if (selectedPartner) {
-      fetch(`/plugins/daydayup/partners/${selectedPartner.id}/history?user_id=default`)
-        .then(res => res.json())
-        .then(data => {
-          setMessages(data.history || []);
-        })
-        .catch(err => {
-          console.error('Failed to load chat history:', err);
-        });
-    }
-  }, [selectedPartner]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
 
   const sendMessage = async () => {
     if (!inputMessage.trim() || !selectedPartner) return;
 
-    const userMessage = {
-      id: `msg_${Date.now()}`,
-      role: 'user',
-      content: inputMessage,
-      timestamp: new Date().toISOString()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
+    const userMsg = { role: 'user', content: inputMessage };
+    setMessages(prev => [...prev, userMsg]);
     setInputMessage('');
 
     try {
-      const response = await fetch('/plugins/daydayup/partners/chat', {
+      const response = await apiRequest('/partners/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           partner_id: selectedPartner.id,
           user_id: 'default',
@@ -77,101 +58,115 @@ export const PartnersView: React.FC<PartnersViewProps> = ({ api }) => {
         })
       });
 
-      const data = await response.json();
-      
-      const assistantMessage = {
-        id: `msg_${Date.now() + 1}`,
+      setMessages(prev => [...prev, {
         role: 'assistant',
-        content: data.message,
-        timestamp: data.timestamp,
-        suggestions: data.suggestions
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (err) {
-      console.error('Failed to send message:', err);
+        content: response.message,
+        partner: response.partner_name
+      }]);
+    } catch (e) {
+      message.error('发送失败');
     }
   };
 
-  if (loading) {
-    return (
-      <div className="view-loading">
-        <div className="loading-spinner">👥</div>
-        <p>加载中...</p>
-      </div>
+  if (loading) return (
+      <Spin size="large" />
     );
-  }
 
   return (
-    <div className="partners-view">
-      <div className="partners-sidebar">
-        <h2>学习伙伴</h2>
-        <div className="partners-list">
-          {partners.map(partner => (
-            <button
-              key={partner.id}
-              className={`partner-item ${selectedPartner?.id === partner.id ? 'active' : ''}`}
-              onClick={() => setSelectedPartner(partner)}
-            >
-              <span className="partner-avatar">{partner.avatar}</span>
-              <div className="partner-info">
-                <span className="partner-name">{partner.name}</span>
-                <span className="partner-desc">{partner.description}</span>
+    <div style={{ padding: '24px' }}>
+      <h2>学习伙伴</h2>
+      <p style={{ color: '#666' }}>
+        基于 Deep Tutor Partner 系统的 AI 学习伙伴
+      </p>
+
+      <div style={{ display: 'flex', marginTop: '24px' }}>
+        {/* 伙伴列表 */}
+        <div style={{ flex: '0 0 150px', marginRight: '24px' }}>
+          <Card title="选择伙伴">
+            {partners.map((partner: any) => (
+              <div
+                key={partner.id}
+                onClick={() => setSelectedPartner(partner)}
+                style={{
+                  padding: '12px',
+                  marginBottom: '8px',
+                  cursor: 'pointer',
+                  borderRadius: '4px',
+                  backgroundColor: selectedPartner?.id === partner.id ? '#e6f7ff' : 'white',
+                  border: '1px solid #f0f0f0'
+                }}
+              >
+                <div style={{ fontSize: '20px' }}>{partner.avatar}</div>
+                <div>{partner.name}</div>
+                <div style={{ fontSize: '12px', color: '#666' }}>{partner.personality}</div>
               </div>
-            </button>
-          ))}
+            ))}
+          </Card>
         </div>
-      </div>
 
-      <div className="chat-area">
-        {selectedPartner ? (
-          <>
-            <div className="chat-header">
-              <span className="partner-avatar">{selectedPartner.avatar}</span>
-              <div className="chat-header-info">
-                <span className="chat-partner-name">{selectedPartner.name}</span>
-                <span className="chat-partner-personality">{selectedPartner.personality}</span>
-              </div>
-            </div>
-
-            <div className="messages-container">
-              {messages.map(msg => (
-                <div key={msg.id} className={`message ${msg.role}`}>
-                  <div className="message-content">{msg.content}</div>
-                  {msg.suggestions && msg.suggestions.length > 0 && (
-                    <div className="message-suggestions">
-                      {msg.suggestions.map((suggestion: string, idx: number) => (
-                        <button key={idx} className="suggestion-btn">
-                          {suggestion}
-                        </button>
-                      ))}
+        {/* 聊天区域 */}
+        <div style={{ flex: 1 }}>
+          {selectedPartner ? (
+            <div>
+              <Card title={`${selectedPartner.name} - ${selectedPartner.description}`} style={{ marginBottom: '16px' }}>
+                {/* 消息列表 */}
+                <div style={{ height: '300px', overflowY: 'auto', marginBottom: '16px', border: '1px solid #f0f0f0', borderRadius: '4px', padding: '12px' }}>
+                  {messages.length === 0 ? (
+                    <div style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
+                      开始和伙伴聊天吧！
                     </div>
+                  ) : (
+                    messages.map((msg: any, idx: number) => (
+                      <div
+                        key={idx}
+                        style={{
+                          marginBottom: '8px',
+                          textAlign: msg.role === 'user' ? 'right' : 'left'
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'inline-block',
+                            padding: '8px 12px',
+                            borderRadius: '12px',
+                            background: msg.role === 'user' ? '#1890ff' : '#f0f0f0',
+                            color: msg.role === 'user' ? '#fff' : '#333',
+                            maxWidth: '70%'
+                          }}
+                        >
+                          {msg.content}
+                        </div>
+                      </div>
+                    ))
                   )}
                 </div>
-              ))}
-              <div ref={messagesEndRef} />
+                {/* 输入区域 */}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Input
+                    value={inputMessage}
+                    onChange={(e: any) => setInputMessage(e.target.value)}
+                    placeholder="输入消息..."
+                    onPressEnter={(e: any) => {
+                      if (!e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                      }
+                    }}
+                  />
+                  <Button type="primary" onClick={sendMessage}>
+                    发送
+                  </Button>
+                </div>
+              </Card>
             </div>
-
-            <div className="chat-input-area">
-              <input
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                placeholder="输入消息..."
-                className="chat-input"
-              />
-              <button onClick={sendMessage} className="send-btn">
-                发送
-              </button>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
+              <div style={{ fontSize: '48px' }}>👥</div>
+              <div style={{ marginTop: '16px' }}>选择一个学习伙伴开始聊天</div>
             </div>
-          </>
-        ) : (
-          <div className="no-partner-selected">
-            <p>请选择一个学习伙伴开始聊天</p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
-};
+}

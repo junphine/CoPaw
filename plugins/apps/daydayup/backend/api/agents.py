@@ -81,6 +81,41 @@ SAMPLE_AGENTS = [
     }
 ]
 
+SAMPLE_capabilities = [
+    {
+        "id": "code",
+        "name": "代码教学",
+        "description": "专业的 Python 编程导师，擅长从基础到高级的教学",
+        "avatar": "🐍",        
+        "tools": ["code_executor", "debugger", "code_explainer"],        
+        "is_public": True,
+        "created_by": "system",
+        "created_at": "2024-01-01T00:00:00Z",
+        "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+        "id": "grammar",
+        "name": "写作指导",
+        "description": "专业的英语写作助手，帮助提升写作能力和语法水平",
+        "avatar": "✍️",        
+        "tools": ["grammar_checker", "vocabulary_suggester", "style_analyzer"],   
+        "is_public": True,
+        "created_by": "system",
+        "created_at": "2024-01-01T00:00:00Z",
+        "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+        "id": "guide",
+        "name": "解题引导",
+        "description": "耐心的数学导师，擅长引导学生理解数学概念和解题方法",
+        "avatar": "🔢",        
+        "tools": ["equation_solver", "graph_plotter", "step_explainer"],     
+        "is_public": True,
+        "created_by": "system",
+        "created_at": "2024-01-01T00:00:00Z",
+        "updated_at": "2024-01-01T00:00:00Z"
+    }
+]
 
 @router.get("/list")
 async def get_agents(user_id: str = "default", include_public: bool = True):
@@ -98,17 +133,19 @@ async def get_agents(user_id: str = "default", include_public: bool = True):
         "total": len(agents)
     }
 
+@router.get("/capabilities")
+async def get_capabilities(user_id: str = "default"):
+    """获取智能体列表"""
+    logger.debug(f"[Agents] Getting capabilities for user: {user_id}")
+    
+    capabilities = []
 
-@router.get("/{agent_id}")
-async def get_agent(agent_id: str):
-    """获取单个智能体详情"""
-    logger.debug(f"[Agents] Getting agent: {agent_id}")
+    capabilities.extend(SAMPLE_capabilities)
     
-    agent = next((a for a in SAMPLE_AGENTS if a["id"] == agent_id), None)
-    if not agent:
-        raise HTTPException(status_code=404, detail=f"Agent not found: {agent_id}")
-    
-    return agent
+    return {
+        "capabilities": capabilities,
+        "total": len(capabilities)
+    }
 
 
 @router.post("/create")
@@ -260,3 +297,17 @@ async def get_agent_templates():
             }
         ]
     }
+
+
+@router.get("/{agent_id}")
+async def get_agent(agent_id: str):
+    """获取单个智能体详情"""
+    logger.debug(f"[Agents] Getting agent: {agent_id}")
+    
+    agent = next((a for a in SAMPLE_AGENTS if a["id"] == agent_id), None)
+    if not agent:
+        raise HTTPException(status_code=404, detail=f"Agent not found: {agent_id}")
+    
+    return agent
+
+

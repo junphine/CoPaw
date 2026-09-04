@@ -64,7 +64,7 @@ const DaydayupApp: React.FC<PluginProps> = ({ config }) => {
   const [activeTab, setActiveTab] = useState('home');
   const [pluginInfo, setPluginInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const api = '/api/plugins/daydayup';
+  const api = '/plugins/daydayup';
   // 导航项配置
   const navItems = [
     { id: 'home', label: '首页', icon: '🏠' },
@@ -82,7 +82,7 @@ const DaydayupApp: React.FC<PluginProps> = ({ config }) => {
     // 使用
     loadStylesheet('/api/frontend_plugin/daydayup/files/dist/style.css');
     // 获取插件信息
-    fetch(api+'/info')
+    fetch('/plugins/daydayup/info')
       .then(res => res.json())
       .then(data => {
         setPluginInfo(data);
